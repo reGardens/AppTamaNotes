@@ -1,0 +1,122 @@
+[
+  {
+    "id": "note-1776168232033",
+    "userId": "user-1",
+    "itemName": "pisang",
+    "quantity": 10000,
+    "unitPrice": 1000,
+    "subtotal": 10000000,
+    "createdAt": "2026-04-14T12:03:52.033Z",
+    "updatedAt": "2026-04-14T14:21:02.873Z"
+  },
+  {
+    "id": "note-1776169042085",
+    "userId": "user-1",
+    "itemName": "mangga 2",
+    "quantity": 1,
+    "unitPrice": 10,
+    "subtotal": 10,
+    "createdAt": "2026-04-14T12:17:22.085Z",
+    "updatedAt": "2026-04-14T14:21:02.711Z"
+  },
+  {
+    "id": "note-1776173325685",
+    "userId": "user-1",
+    "itemName": "beras",
+    "quantity": 10000,
+    "unitPrice": 1,
+    "subtotal": 10000,
+    "createdAt": "2026-04-14T13:28:45.685Z",
+    "updatedAt": "2026-04-14T14:21:02.311Z"
+  },
+  {
+    "id": "note-1776177011338",
+    "userId": "user-1",
+    "itemName": "balon",
+    "quantity": 1000000,
+    "unitPrice": 10,
+    "subtotal": 10000000,
+    "createdAt": "2026-04-14T14:30:11.338Z",
+    "updatedAt": "2026-04-14T14:30:11.338Z"
+  },
+  {
+    "id": "note-1776177046651",
+    "userId": "user-1",
+    "itemName": "nasi goreng",
+    "quantity": 15000,
+    "unitPrice": 2,
+    "subtotal": 30000,
+    "createdAt": "2026-04-14T14:30:46.651Z",
+    "updatedAt": "2026-04-14T14:30:46.651Z"
+  },
+  {
+    "id": "note-1776177066788",
+    "userId": "user-1",
+    "itemName": "cabai",
+    "quantity": 5000,
+    "unitPrice": 1,
+    "subtotal": 5000,
+    "createdAt": "2026-04-14T14:31:06.788Z",
+    "updatedAt": "2026-04-14T14:31:06.788Z"
+  },
+  {
+    "id": "note-1776177123432",
+    "userId": "user-1",
+    "itemName": "gehu",
+    "quantity": 3000,
+    "unitPrice": 2,
+    "subtotal": 6000,
+    "createdAt": "2026-04-14T14:32:03.432Z",
+    "updatedAt": "2026-04-14T14:32:03.432Z"
+  },
+  {
+    "id": "note-1776177151965",
+    "userId": "user-1",
+    "itemName": "pecel ayam",
+    "quantity": 20000,
+    "unitPrice": 2,
+    "subtotal": 40000,
+    "createdAt": "2026-04-14T14:32:31.965Z",
+    "updatedAt": "2026-04-14T14:32:31.965Z"
+  },
+  {
+    "id": "note-1776177167735",
+    "userId": "user-1",
+    "itemName": "jeruk peras",
+    "quantity": 10000,
+    "unitPrice": 1,
+    "subtotal": 10000,
+    "createdAt": "2026-04-14T14:32:47.735Z",
+    "updatedAt": "2026-04-14T14:32:47.735Z"
+  },
+  {
+    "id": "note-1776177178235",
+    "userId": "user-1",
+    "itemName": "jeruk sunkis",
+    "quantity": 30000,
+    "unitPrice": 1,
+    "subtotal": 30000,
+    "createdAt": "2026-04-14T14:32:58.235Z",
+    "updatedAt": "2026-04-14T15:13:29.038Z"
+  },
+  {
+    "id": "note-1776177264015",
+    "userId": "user-1",
+    "itemName": "parkir",
+    "quantity": 3000,
+    "unitPrice": 1,
+    "subtotal": 3000,
+    "createdAt": "2026-04-14T14:34:24.015Z",
+    "updatedAt": "2026-04-14T15:13:28.554Z"
+  },
+  {
+    "id": "note-1776180281820",
+    "userId": "user-1",
+    "itemName": "baru",
+    "quantity": 10,
+    "unitPrice": 1000,
+    "subtotal": 10000,
+    "createdAt": "2026-04-14T15:24:41.820Z",
+    "updatedAt": "2026-04-14T15:24:41.820Z"
+  }
+]
