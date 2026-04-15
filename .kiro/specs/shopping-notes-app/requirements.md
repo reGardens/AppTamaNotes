@@ -6,7 +6,7 @@ Aplikasi web Shopping Notes adalah aplikasi pencatatan belanjaan yang memungkink
 
 ## Glosarium
 
-- **Aplikasi**: Aplikasi web Shopping Notes yang dibangun dengan Next.js 15 dan React 19
+- **Aplikasi**: Aplikasi web Notes yang dibangun dengan Next.js 15 dan React 19
 - **Pengguna**: Orang yang mengakses dan menggunakan Aplikasi melalui browser
 - **Catatan_Belanja**: Satu entri catatan belanjaan yang berisi nama item, jumlah, harga satuan, dan subtotal
 - **Daftar_Belanja**: Kumpulan Catatan_Belanja yang dimiliki oleh satu Pengguna
