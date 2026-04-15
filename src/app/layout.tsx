@@ -5,6 +5,7 @@ import AppProviders from './AppProviders';
 export const metadata: Metadata = {
   title: 'Pratama Notes',
   description: 'Aplikasi pencatatan belanjaan keluarga Pratama',
+  icons: { icon: '/favicon.svg' },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation';
 import {
   Container, AppBar, Toolbar, Typography, Button, Box, CircularProgress, Skeleton,
   Paper, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import BackupIcon from '@mui/icons-material/Backup';
 import RestoreIcon from '@mui/icons-material/Restore';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useAuthStore } from '@/store/authStore';
 import { useNotesStore } from '@/store/notesStore';
 import { useFormStore } from '@/store/formStore';
@@ -22,7 +25,7 @@ import ExportButton from '@/components/ExportButton';
 import ScrollToTop from '@/components/ScrollToTop';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import MonthPicker from '@/components/MonthPicker';
-import { downloadBackup, restoreBackup } from '@/lib/api';
+import { downloadBackup, restoreBackup, addUser, getUsers, deleteUser } from '@/lib/api';
 import { showSuccess, showError, showConfirm, showInfo, showConfirmHtml } from '@/components/SweetAlertProvider';
 import { animateOut } from '@/animations/gsapAnimations';
 import { calculateTotal } from '@/lib/calculateTotal';
@@ -50,12 +53,17 @@ export default function DashboardPage() {
   const [fetchingNotes, setFetchingNotes] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [userList, setUserList] = useState<{ id: string; email: string }[]>([]);
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const theme = getUserTheme(user?.email);
+  const isAdmin = user?.id === 'user-1';
 
   useEffect(() => { setHydrated(true); }, []);
   useEffect(() => {
@@ -116,6 +124,26 @@ export default function DashboardPage() {
 
   const handleCancelEdit = useCallback(() => { setEditingId(null); clearDraft(); }, [setEditingId, clearDraft]);
 
+  const handleOpenUserDialog = useCallback(() => {
+    setMenuAnchor(null);
+    setUserList(getUsers());
+    setNewEmail(''); setNewPassword('');
+    setUserDialogOpen(true);
+  }, []);
+
+  const handleAddUser = useCallback(async () => {
+    const res = await addUser(newEmail, newPassword);
+    if (res.success) { showSuccess('Berhasil', 'User baru ditambahkan'); setUserList(getUsers()); setNewEmail(''); setNewPassword(''); }
+    else showError('Gagal', res.error || 'Tidak bisa menambah user');
+  }, [newEmail, newPassword]);
+
+  const handleDeleteUser = useCallback(async (userId: string) => {
+    if (!await showConfirm('Hapus User', 'Yakin ingin menghapus user ini?')) return;
+    const res = await deleteUser(userId);
+    if (res.success) { showSuccess('Berhasil', 'User dihapus'); setUserList(getUsers()); }
+    else showError('Gagal', res.error || 'Tidak bisa menghapus');
+  }, []);
+
   const handleBackup = useCallback(() => {
     setMenuAnchor(null);
     downloadBackup();
@@ -166,6 +194,7 @@ export default function DashboardPage() {
             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
               <MenuItem onClick={handleBackup}><ListItemIcon><BackupIcon fontSize="small" sx={{ color: '#16a34a' }} /></ListItemIcon><ListItemText>Backup Data</ListItemText></MenuItem>
               <MenuItem onClick={handleRestore}><ListItemIcon><RestoreIcon fontSize="small" sx={{ color: '#3b82f6' }} /></ListItemIcon><ListItemText>Restore Data</ListItemText></MenuItem>
+              {isAdmin && <MenuItem onClick={handleOpenUserDialog}><ListItemIcon><PersonAddIcon fontSize="small" sx={{ color: '#a855f7' }} /></ListItemIcon><ListItemText>Kelola User</ListItemText></MenuItem>}
             </Menu>
             <Button variant="outlined" size="small" startIcon={loggingOut ? <CircularProgress size={16} /> : <LogoutIcon />} onClick={handleLogout} disabled={loggingOut}
               sx={{ borderRadius: 2, textTransform: 'none', borderColor: darkMode ? '#475569' : '#e2e8f0', color: darkMode ? '#94a3b8' : '#64748b', '&:hover': { borderColor: '#ef4444', color: '#ef4444' } }}>
@@ -203,6 +232,44 @@ export default function DashboardPage() {
         <Typography variant="caption" sx={{ color: '#94a3b8', textAlign: 'center', mt: 4, display: 'block', pb: 2 }}>Pratama Notes · v1.0.0</Typography>
       </Container>
       <ScrollToTop themeColor={theme.primary} />
+
+      {/* User Management Dialog (admin only) */}
+      {isAdmin && (
+        <Dialog open={userDialogOpen} onClose={() => setUserDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>👥 Kelola User</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            {/* User list */}
+            <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, letterSpacing: 1 }}>Daftar User</Typography>
+            <Box sx={{ mt: 1, mb: 3 }}>
+              {userList.map((u) => (
+                <Box key={u.id} sx={(t) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, px: 2, mb: 1, borderRadius: 2, bgcolor: t.palette.mode === 'dark' ? '#0f172a' : '#f8fafc', border: `1px solid ${t.palette.mode === 'dark' ? '#334155' : '#e2e8f0'}` })}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>{u.email}</Typography>
+                    <Typography variant="caption" sx={{ color: u.id === 'user-1' ? '#16a34a' : '#94a3b8' }}>{u.id === 'user-1' ? '👑 Admin' : 'User'}</Typography>
+                  </Box>
+                  {u.id !== 'user-1' && u.id !== 'user-2' && (
+                    <IconButton size="small" color="error" onClick={() => handleDeleteUser(u.id)}><DeleteIcon fontSize="small" /></IconButton>
+                  )}
+                </Box>
+              ))}
+            </Box>
+
+            {/* Add user form */}
+            <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, letterSpacing: 1 }}>Tambah User Baru</Typography>
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField label="Email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} placeholder="email@contoh.com" type="email" />
+              <TextField label="Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} fullWidth size="small" InputLabelProps={{ shrink: true }} placeholder="Min. 8 karakter" type="password" />
+              <Button variant="contained" onClick={handleAddUser} disabled={!newEmail || !newPassword || newPassword.length < 8} fullWidth startIcon={<PersonAddIcon />}
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: theme.primary, color: '#fff', '&:hover': { bgcolor: theme.primaryHover } }}>
+                Tambah User
+              </Button>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setUserDialogOpen(false)} sx={{ textTransform: 'none' }}>Tutup</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 }

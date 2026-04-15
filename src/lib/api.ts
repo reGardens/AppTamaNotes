@@ -21,7 +21,27 @@ const USERS_KEY = 'pratama-users-data';
 
 function getStoredUsers(): typeof USERS {
   if (typeof window === 'undefined') return USERS;
-  // Always sync hardcoded users to localStorage (email/password changes in code take effect immediately)
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw) as typeof USERS;
+      // Merge: ensure hardcoded users exist (update email/password if changed in code), keep extra users
+      const merged = [...USERS];
+      for (const s of stored) {
+        if (!merged.some((m) => m.id === s.id)) merged.push(s);
+      }
+      // Update passwords from stored (in case user did reset password)
+      for (const s of stored) {
+        const m = merged.find((x) => x.id === s.id);
+        if (m && USERS.some((u) => u.id === s.id)) {
+          // For hardcoded users, keep stored password (may have been reset)
+          m.password = s.password;
+        }
+      }
+      localStorage.setItem(USERS_KEY, JSON.stringify(merged));
+      return merged;
+    }
+  } catch { /* ignore */ }
   localStorage.setItem(USERS_KEY, JSON.stringify(USERS));
   return USERS;
 }
@@ -60,15 +80,38 @@ export async function logout(): Promise<LogoutResponse> {
 
 export async function resetPassword(email: string, newPassword: string): Promise<ResetPasswordResponse> {
   if (newPassword.length < 8) return { success: false, error: 'Password minimal 8 karakter' };
-  // Read current users (may have been modified by previous reset)
-  let users: typeof USERS;
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(USERS_KEY) : null;
-    users = raw ? JSON.parse(raw) : [...USERS];
-  } catch { users = [...USERS]; }
+  const users = getStoredUsers();
   const idx = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
   if (idx === -1) return { success: false, error: 'Email tidak ditemukan' };
   users[idx].password = newPassword;
+  saveUsers(users);
+  return { success: true };
+}
+
+// === User Management (admin only - Rezza) ===
+
+export interface AddUserResponse { success: boolean; error?: string }
+
+export async function addUser(email: string, password: string): Promise<AddUserResponse> {
+  if (!email || !password) return { success: false, error: 'Email dan password wajib diisi' };
+  if (password.length < 8) return { success: false, error: 'Password minimal 8 karakter' };
+  const users = getStoredUsers();
+  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return { success: false, error: 'Email sudah terdaftar' };
+  users.push({ id: `user-${Date.now()}`, email, password });
+  saveUsers(users);
+  return { success: true };
+}
+
+export function getUsers(): { id: string; email: string }[] {
+  return getStoredUsers().map((u) => ({ id: u.id, email: u.email }));
+}
+
+export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
+  if (userId === 'user-1') return { success: false, error: 'Tidak bisa menghapus akun admin' };
+  const users = getStoredUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx === -1) return { success: false, error: 'User tidak ditemukan' };
+  users.splice(idx, 1);
   saveUsers(users);
   return { success: true };
 }
@@ -117,7 +160,6 @@ export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
   saveNotes(notes);
   return { success: true };
 }
-
 
 // === Backup & Restore ===
 
