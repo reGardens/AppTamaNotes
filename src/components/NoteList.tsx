@@ -11,8 +11,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { formatAmount } from '@/lib/formatAmount';
+import { formatDateTime, isOlderThanMonths } from '@/lib/formatTime';
+import { exportToExcel } from '@/lib/exportToExcel';
 import { animateIn } from '@/animations/gsapAnimations';
 import type { ShoppingNote } from '@/types';
 
@@ -23,9 +27,11 @@ interface NoteListProps {
   onBatchDelete?: (ids: string[]) => void;
   onBatchEdit?: (updates: { id: string; itemName: string; quantity: number; unitPrice: number }[]) => void;
   themeColor?: string;
+  /** If true, show archive download instead of editable table */
+  isArchived?: boolean;
 }
 
-export default function NoteList({ notes, onEdit, onDelete, onBatchDelete, onBatchEdit, themeColor = '#3b82f6' }: NoteListProps) {
+export default function NoteList({ notes, onEdit, onDelete, onBatchDelete, onBatchEdit, themeColor = '#3b82f6', isArchived = false }: NoteListProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -91,6 +97,32 @@ export default function NoteList({ notes, onEdit, onDelete, onBatchDelete, onBat
     );
   }
 
+  // Archived months: show download prompt instead of full table
+  if (isArchived && notes.length > 0) {
+    return (
+      <Paper elevation={0} sx={(t) => ({ borderRadius: 3, boxShadow: t.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.06)' })} className="p-6">
+        <Box className="flex flex-col items-center gap-4 text-center">
+          <ArchiveIcon sx={{ fontSize: 48, color: '#f59e0b' }} />
+          <Typography variant="body1" fontWeight={600}>Data bulan ini telah diarsipkan</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Terdapat {notes.length} catatan pada bulan ini. Data yang lebih dari 3 bulan otomatis diarsipkan untuk menjaga performa aplikasi.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<FileDownloadIcon />}
+            onClick={() => exportToExcel(notes)}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: themeColor, color: '#fff', '&:hover': { bgcolor: themeColor, opacity: 0.9 } }}
+          >
+            Unduh Data Excel (.xlsx)
+          </Button>
+          <Typography variant="caption" color="text.secondary">
+            Silakan unduh file Excel untuk melihat detail catatan bulan ini
+          </Typography>
+        </Box>
+      </Paper>
+    );
+  }
+
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
   const somePageSelected = pageIds.some((id) => selected.has(id));
   const totalPages = Math.ceil(notes.length / rowsPerPage);
@@ -125,6 +157,7 @@ export default function NoteList({ notes, onEdit, onDelete, onBatchDelete, onBat
               <TableCell align="center" sx={hd}>Qty</TableCell>
               <TableCell align="right" sx={hd}>Harga</TableCell>
               <TableCell align="right" sx={hd}>Subtotal</TableCell>
+              <TableCell align="center" sx={hd}>Waktu</TableCell>
               <TableCell align="center" sx={hd}>Aksi</TableCell>
             </TableRow>
           </TableHead>
@@ -137,6 +170,7 @@ export default function NoteList({ notes, onEdit, onDelete, onBatchDelete, onBat
                 <TableCell align="center" sx={nw}>{formatAmount(note.quantity)}</TableCell>
                 <TableCell align="right" sx={{ color: '#64748b', ...nw }}>{formatCurrency(note.unitPrice)}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600, color: themeColor, ...nw }}>{formatCurrency(note.subtotal)}</TableCell>
+                <TableCell align="center" sx={{ color: '#94a3b8', fontSize: '0.8rem', ...nw }}>{formatDateTime(note.createdAt)}</TableCell>
                 <TableCell align="center" sx={nw}>
                   <IconButton size="small" onClick={() => handleOpenEdit([note.id])} aria-label="edit" sx={{ color: themeColor }}><EditIcon fontSize="small" /></IconButton>
                   <IconButton size="small" color="error" onClick={() => onDelete(note.id)} aria-label="delete"><DeleteIcon fontSize="small" /></IconButton>

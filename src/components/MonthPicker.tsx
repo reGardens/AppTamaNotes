@@ -5,6 +5,7 @@ import { Box, Typography, IconButton, Popover, ButtonBase } from '@mui/material'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import TodayIcon from '@mui/icons-material/Today';
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const MONTHS_LONG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -101,6 +102,17 @@ export default function MonthPicker({ value, onChange, themeColor = '#3b82f6' }:
               </ButtonBase>
             );
           })}
+        </Box>
+
+        {/* Reset to current month */}
+        <Box sx={(t) => ({ px: 1.5, pb: 1.5, pt: 0.5, borderTop: `1px solid ${t.palette.mode === 'dark' ? '#334155' : '#e2e8f0'}`, mt: 0.5 })}>
+          <ButtonBase
+            onClick={() => { const now = new Date(); const val = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; onChange(val); setViewYear(now.getFullYear()); setAnchorEl(null); }}
+            sx={{ width: '100%', py: 0.75, borderRadius: 2, fontSize: '0.8rem', fontWeight: 600, color: themeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, '&:hover': { bgcolor: `${themeColor}10` } }}
+          >
+            <TodayIcon sx={{ fontSize: 16 }} />
+            Bulan Ini
+          </ButtonBase>
         </Box>
       </Popover>
     </>

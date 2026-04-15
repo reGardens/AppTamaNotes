@@ -4,9 +4,12 @@ import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation';
 import {
   Container, AppBar, Toolbar, Typography, Button, Box, CircularProgress, Skeleton,
-  Paper,
+  Paper, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import BackupIcon from '@mui/icons-material/Backup';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { useAuthStore } from '@/store/authStore';
 import { useNotesStore } from '@/store/notesStore';
 import { useFormStore } from '@/store/formStore';
@@ -19,6 +22,7 @@ import ExportButton from '@/components/ExportButton';
 import ScrollToTop from '@/components/ScrollToTop';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import MonthPicker from '@/components/MonthPicker';
+import { downloadBackup, restoreBackup } from '@/lib/api';
 import { showSuccess, showError, showConfirm, showInfo, showConfirmHtml } from '@/components/SweetAlertProvider';
 import { animateOut } from '@/animations/gsapAnimations';
 import { calculateTotal } from '@/lib/calculateTotal';
@@ -45,6 +49,7 @@ export default function DashboardPage() {
   const [hydrated, setHydrated] = useState(false);
   const [fetchingNotes, setFetchingNotes] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
@@ -69,6 +74,17 @@ export default function DashboardPage() {
   }, [notes, selectedMonth]);
 
   const filteredTotal = useMemo(() => calculateTotal(filteredNotes), [filteredNotes]);
+
+  // Check if selected month is older than 3 months (archived)
+  const isArchivedMonth = useMemo(() => {
+    if (!selectedMonth) return false;
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const selected = new Date(y, m - 1, 1);
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 3);
+    cutoff.setDate(1);
+    return selected < cutoff;
+  }, [selectedMonth]);
 
   const editingNote: ShoppingNote | undefined = editingId ? filteredNotes.find((n) => n.id === editingId) : undefined;
 
@@ -100,6 +116,32 @@ export default function DashboardPage() {
 
   const handleCancelEdit = useCallback(() => { setEditingId(null); clearDraft(); }, [setEditingId, clearDraft]);
 
+  const handleBackup = useCallback(() => {
+    setMenuAnchor(null);
+    downloadBackup();
+    showSuccess('Backup berhasil', 'File backup telah diunduh');
+  }, []);
+
+  const handleRestore = useCallback(() => {
+    setMenuAnchor(null);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const result = restoreBackup(text);
+      if (result.success) {
+        showSuccess('Restore berhasil', `${result.count} catatan berhasil dipulihkan`);
+        if (user?.id) fetchNotes(user.id);
+      } else {
+        showError('Restore gagal', result.error || 'File tidak valid');
+      }
+    };
+    input.click();
+  }, [user?.id, fetchNotes]);
+
   const handleLogout = useCallback(async () => {
     if (!await showConfirm('Logout', 'Yakin ingin keluar?')) return;
     setLoggingOut(true); await logout(); router.push('/login');
@@ -118,6 +160,13 @@ export default function DashboardPage() {
           <Box className="flex items-center gap-2">
             <Typography variant="body2" sx={{ color: '#64748b', display: { xs: 'none', sm: 'block' } }}>{user.email}</Typography>
             <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
+            <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+              <MenuItem onClick={handleBackup}><ListItemIcon><BackupIcon fontSize="small" sx={{ color: '#16a34a' }} /></ListItemIcon><ListItemText>Backup Data</ListItemText></MenuItem>
+              <MenuItem onClick={handleRestore}><ListItemIcon><RestoreIcon fontSize="small" sx={{ color: '#3b82f6' }} /></ListItemIcon><ListItemText>Restore Data</ListItemText></MenuItem>
+            </Menu>
             <Button variant="outlined" size="small" startIcon={loggingOut ? <CircularProgress size={16} /> : <LogoutIcon />} onClick={handleLogout} disabled={loggingOut}
               sx={{ borderRadius: 2, textTransform: 'none', borderColor: darkMode ? '#475569' : '#e2e8f0', color: darkMode ? '#94a3b8' : '#64748b', '&:hover': { borderColor: '#ef4444', color: '#ef4444' } }}>
               {loggingOut ? 'Keluar...' : 'Logout'}
@@ -146,7 +195,7 @@ export default function DashboardPage() {
           {fetchingNotes ? (
             <Box className="flex flex-col gap-3"><Skeleton variant="rounded" height={48} sx={{ borderRadius: 2 }} /><Skeleton variant="rounded" height={48} sx={{ borderRadius: 2 }} /><Skeleton variant="rounded" height={48} sx={{ borderRadius: 2 }} /></Box>
           ) : (
-            <NoteList notes={filteredNotes} onEdit={handleEdit} onDelete={handleDelete} onBatchDelete={handleBatchDelete} onBatchEdit={handleBatchEdit} themeColor={theme.primary} />
+            <NoteList notes={filteredNotes} onEdit={handleEdit} onDelete={handleDelete} onBatchDelete={handleBatchDelete} onBatchEdit={handleBatchEdit} themeColor={theme.primary} isArchived={isArchivedMonth} />
           )}
         </div>
 

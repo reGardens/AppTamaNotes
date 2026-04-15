@@ -54,6 +54,7 @@ export default function LoginPage() {
       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: darkMode ? '#475569' : '#cbd5e1' },
     },
     '& .MuiOutlinedInput-input': { py: 1.5, px: 1.5 },
+    '& .MuiInputLabel-root': { bgcolor: darkMode ? '#1e293b' : '#fff', px: 0.5, borderRadius: 0.5 },
   };
 
   return (
