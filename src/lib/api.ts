@@ -4,7 +4,7 @@ import { calculateSubtotal } from './calculateSubtotal';
 // === Hardcoded users (no server needed) ===
 const USERS = [
   { id: 'user-1', email: 'rezzabagus.rb@gmail.com', password: 'Kapanpundimanapun' },
-  { id: 'user-2', email: 'ritakarina12@gmail.com', password: 'Jakarta021096' },
+  { id: 'user-2', email: 'Ritakarina0210@gmail.com', password: 'Jakarta021096' },
 ];
 
 // === Response Types ===
@@ -21,11 +21,7 @@ const USERS_KEY = 'pratama-users-data';
 
 function getStoredUsers(): typeof USERS {
   if (typeof window === 'undefined') return USERS;
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  // Initialize with default users
+  // Always sync hardcoded users to localStorage (email/password changes in code take effect immediately)
   localStorage.setItem(USERS_KEY, JSON.stringify(USERS));
   return USERS;
 }
@@ -53,7 +49,7 @@ function saveNotes(notes: ShoppingNote[]) {
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const users = getStoredUsers();
-  const user = users.find((u) => u.email === email && u.password === password);
+  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
   if (!user) return { success: false, error: 'Email atau password salah' };
   return { success: true, user: { id: user.id, email: user.email } };
 }
@@ -64,8 +60,13 @@ export async function logout(): Promise<LogoutResponse> {
 
 export async function resetPassword(email: string, newPassword: string): Promise<ResetPasswordResponse> {
   if (newPassword.length < 8) return { success: false, error: 'Password minimal 8 karakter' };
-  const users = getStoredUsers();
-  const idx = users.findIndex((u) => u.email === email);
+  // Read current users (may have been modified by previous reset)
+  let users: typeof USERS;
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(USERS_KEY) : null;
+    users = raw ? JSON.parse(raw) : [...USERS];
+  } catch { users = [...USERS]; }
+  const idx = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
   if (idx === -1) return { success: false, error: 'Email tidak ditemukan' };
   users[idx].password = newPassword;
   saveUsers(users);
